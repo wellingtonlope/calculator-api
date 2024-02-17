@@ -3,12 +3,23 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cucumber/godog"
 	"io"
 	"net/http"
+	"os"
 	"reflect"
 	"testing"
+
+	"github.com/cucumber/godog"
+	server "github.com/wellingtonlope/calculator-api/cmd/http/server"
 )
+
+func TestMain(m *testing.M) {
+	server := server.New()
+	go server.Start(":8080")
+	code := m.Run()
+	server.Close()
+	os.Exit(code)
+}
 
 type restFeature struct {
 	response *http.Response
