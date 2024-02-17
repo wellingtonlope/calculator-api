@@ -1,6 +1,9 @@
 package main
 
-import "github.com/wellingtonlope/calculator-api/cmd/http/server"
+import (
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/wellingtonlope/calculator-api/cmd/http/server"
+)
 
 func main() {
 	server := server.New()

@@ -1,0 +1,4 @@
+CREATE TABLE variables (
+  name TEXT NOT NULL PRIMARY KEY,
+  value DECIMAL(10,5) NOT NULL DEFAULT 0
+);
