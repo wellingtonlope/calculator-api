@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -32,6 +33,19 @@ func (f *restFeature) iSendRequestTo(method, endpoint, paramName, paramValue str
 	if err != nil {
 		return fmt.Errorf("fail to mount request: %w", err)
 	}
+	f.response, err = http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("fail to make request: %w", err)
+	}
+	return nil
+}
+
+func (f *restFeature) iSendRequestToWithBody(method, endpoint string, body *godog.DocString) error {
+	req, err := http.NewRequest(method, fmt.Sprintf("http://localhost:8080%s", endpoint), strings.NewReader(body.Content))
+	if err != nil {
+		return fmt.Errorf("fail to mount request: %w", err)
+	}
+	req.Header.Add("Content-Type", "application/json")
 	f.response, err = http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("fail to make request: %w", err)
@@ -82,6 +96,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	rest := &restFeature{}
 
 	ctx.Step(`^I send a "(GET|POST|PUT|DELETE)" request for "([^"]*)" with the query params "([^"]*)" filled with the values "([^"]*)"$`, rest.iSendRequestTo)
+	ctx.Step(`^I send a "(GET|POST|PUT|DELETE)" request for "([^"]*)" with json:$`, rest.iSendRequestToWithBody)
 	ctx.Step(`^the response should have status code (\d+)$`, rest.theResponseCodeShouldBe)
 	ctx.Step(`^the response should match json:$`, rest.theResponseShouldMatchJSON)
 }
