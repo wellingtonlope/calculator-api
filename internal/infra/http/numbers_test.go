@@ -1,14 +1,16 @@
 package http
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"strings"
+	"testing"
+
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/wellingtonlope/calculator-api/internal/app/usecase"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
 )
 
 func TestNumbers_Sum(t *testing.T) {
@@ -16,13 +18,18 @@ func TestNumbers_Sum(t *testing.T) {
 		name           string
 		sum            *usecase.SumNumbersMock
 		url            string
+		err            error
 		responseBody   string
 		responseStatus int
 	}{
 		{
-			name:           "should fail when param numbers are not numbers",
-			sum:            usecase.NewSumNumbersMock(),
-			url:            "/sum?numbers=a,b",
+			name: "should fail when param numbers are not numbers",
+			sum:  usecase.NewSumNumbersMock(),
+			url:  "/sum?numbers=a,b",
+			err: usecase.NewError("numbers values must be numbers", func() error {
+				_, err := strconv.ParseFloat("a", 64)
+				return err
+			}(), usecase.ErrorTypeInvalid),
 			responseBody:   `{"message":"numbers values must be numbers"}`,
 			responseStatus: http.StatusBadRequest,
 		},
@@ -30,6 +37,7 @@ func TestNumbers_Sum(t *testing.T) {
 			name:           "should return 0 when numbers params is empty",
 			sum:            usecase.NewSumNumbersMock(),
 			url:            "/sum?numbers=",
+			err:            nil,
 			responseBody:   `{"result":0}`,
 			responseStatus: http.StatusOK,
 		},
@@ -41,6 +49,7 @@ func TestNumbers_Sum(t *testing.T) {
 				return m
 			}(),
 			url:            "/sum?numbers=1,2",
+			err:            nil,
 			responseBody:   `{"result":3}`,
 			responseStatus: http.StatusOK,
 		},
@@ -55,6 +64,10 @@ func TestNumbers_Sum(t *testing.T) {
 
 			err := handle.Sum(c)
 
+			if tc.err != nil {
+				assert.Equal(t, tc.err, err)
+				return
+			}
 			assert.Nil(t, err)
 			assert.Equal(t, tc.responseStatus, rec.Code)
 			assert.Equal(t, tc.responseBody, strings.ReplaceAll(rec.Body.String(), "\n", ""))

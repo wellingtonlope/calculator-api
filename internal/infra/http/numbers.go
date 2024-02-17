@@ -1,11 +1,12 @@
 package http
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/wellingtonlope/calculator-api/internal/app/usecase"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/labstack/echo/v4"
+	"github.com/wellingtonlope/calculator-api/internal/app/usecase"
 )
 
 type (
@@ -31,7 +32,7 @@ func (h numbers) Sum(c echo.Context) error {
 	for _, numberS := range numbersStringSlice {
 		number, err := strconv.ParseFloat(numberS, 64)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{"message": "numbers values must be numbers"})
+			return usecase.NewError("numbers values must be numbers", err, usecase.ErrorTypeInvalid)
 		}
 		numbersSlice = append(numbersSlice, number)
 	}
